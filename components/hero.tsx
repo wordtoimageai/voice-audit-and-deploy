@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowRight, ChevronDown } from "lucide-react"
@@ -61,13 +62,11 @@ export function Hero() {
           </p>
 
           <div className="mt-10 flex flex-wrap items-center gap-4">
-            <Button
-              size="lg"
-              className="h-11 px-8 text-base font-medium"
-              onClick={() => scrollTo("#contact")}
-            >
-              Start for free
-              <ArrowRight className="h-4 w-4" />
+            <Button size="lg" className="h-11 px-8 text-base font-medium" asChild>
+              <Link href="/signup">
+                Start for free
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </Button>
             <Button
               size="lg"
@@ -83,10 +82,7 @@ export function Hero() {
         {/* Stats row */}
         <div className="mt-20 grid grid-cols-2 gap-px border border-border rounded-xl overflow-hidden md:grid-cols-4">
           {STATS.map(({ value, label }) => (
-            <div
-              key={label}
-              className="flex flex-col gap-1 bg-card px-6 py-5"
-            >
+            <div key={label} className="flex flex-col gap-1 bg-card px-6 py-5">
               <span className="text-2xl font-bold tracking-tight text-foreground">
                 {value}
               </span>

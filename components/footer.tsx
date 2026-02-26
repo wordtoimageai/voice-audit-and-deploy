@@ -1,36 +1,30 @@
-"use client"
+import Link from "next/link"
 
 const FOOTER_LINKS = {
   Product: [
     { label: "Features", href: "#features" },
     { label: "Pricing", href: "#pricing" },
-    { label: "Changelog", href: "#" },
-    { label: "Roadmap", href: "#" },
+    { label: "Changelog", href: "/changelog" },
+    { label: "Roadmap", href: "/roadmap" },
   ],
   Company: [
-    { label: "About", href: "#" },
-    { label: "Blog", href: "#" },
-    { label: "Careers", href: "#" },
-    { label: "Press", href: "#" },
+    { label: "About", href: "/about" },
+    { label: "Blog", href: "/blog" },
+    { label: "Careers", href: "/careers" },
+    { label: "Press", href: "/press" },
   ],
   Support: [
-    { label: "Documentation", href: "#" },
-    { label: "Community", href: "#" },
+    { label: "Documentation", href: "/docs" },
+    { label: "Community", href: "/community" },
     { label: "Contact", href: "#contact" },
-    { label: "Status", href: "#" },
+    { label: "Status", href: "/status" },
   ],
   Legal: [
-    { label: "Privacy", href: "#" },
-    { label: "Terms", href: "#" },
-    { label: "Cookies", href: "#" },
-    { label: "Licenses", href: "#" },
+    { label: "Privacy", href: "/privacy" },
+    { label: "Terms", href: "/terms" },
+    { label: "Cookies", href: "/cookies" },
+    { label: "Licenses", href: "/licenses" },
   ],
-}
-
-function handleNav(href: string) {
-  if (href === "#") return
-  const el = document.querySelector(href)
-  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
 }
 
 export function Footer() {
@@ -40,13 +34,12 @@ export function Footer() {
         <div className="grid gap-12 md:grid-cols-5">
           {/* Brand */}
           <div className="md:col-span-1 flex flex-col gap-4">
-            <button
-              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            <Link
+              href="/"
               className="text-sm font-bold tracking-tight text-foreground w-fit focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
-              aria-label="Go to top"
             >
               my-app
-            </button>
+            </Link>
             <p className="text-sm leading-relaxed text-muted-foreground">
               The complete platform to build and ship production-grade web
               applications.
@@ -63,12 +56,21 @@ export function Footer() {
                 <ul className="flex flex-col gap-2.5">
                   {links.map(({ label, href }) => (
                     <li key={label}>
-                      <button
-                        onClick={() => handleNav(href)}
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded text-left"
-                      >
-                        {label}
-                      </button>
+                      {href.startsWith("#") ? (
+                        <a
+                          href={href}
+                          className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                        >
+                          {label}
+                        </a>
+                      ) : (
+                        <Link
+                          href={href}
+                          className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                        >
+                          {label}
+                        </Link>
+                      )}
                     </li>
                   ))}
                 </ul>
