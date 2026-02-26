@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Check } from "lucide-react"
@@ -20,6 +21,7 @@ const PLANS = [
       "1 team member",
     ],
     cta: "Get started free",
+    href: "/signup",
     highlighted: false,
   },
   {
@@ -37,6 +39,7 @@ const PLANS = [
       "99.9% uptime SLA",
     ],
     cta: "Start free trial",
+    href: "/signup",
     highlighted: true,
   },
   {
@@ -54,12 +57,13 @@ const PLANS = [
       "Audit logs",
     ],
     cta: "Contact sales",
+    href: "#contact",
     highlighted: false,
   },
 ]
 
-function scrollTo(id: string) {
-  const el = document.querySelector(id)
+function scrollToContact() {
+  const el = document.querySelector("#contact")
   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
 }
 
@@ -153,9 +157,7 @@ export function Pricing() {
                 </p>
                 <div className="flex items-end gap-1 mb-2">
                   {plan.monthlyPrice === null ? (
-                    <span className="text-4xl font-bold tracking-tight">
-                      Custom
-                    </span>
+                    <span className="text-4xl font-bold tracking-tight">Custom</span>
                   ) : (
                     <>
                       <span className="text-4xl font-bold tracking-tight">
@@ -208,17 +210,29 @@ export function Pricing() {
                 ))}
               </ul>
 
-              <Button
-                onClick={() => scrollTo("#contact")}
-                variant={plan.highlighted ? "secondary" : "outline"}
-                className={cn(
-                  "w-full font-medium",
-                  plan.highlighted &&
-                    "bg-background text-foreground hover:bg-secondary"
-                )}
-              >
-                {plan.cta}
-              </Button>
+              {plan.href === "#contact" ? (
+                <Button
+                  onClick={scrollToContact}
+                  variant={plan.highlighted ? "secondary" : "outline"}
+                  className={cn(
+                    "w-full font-medium",
+                    plan.highlighted && "bg-background text-foreground hover:bg-secondary"
+                  )}
+                >
+                  {plan.cta}
+                </Button>
+              ) : (
+                <Button
+                  variant={plan.highlighted ? "secondary" : "outline"}
+                  className={cn(
+                    "w-full font-medium",
+                    plan.highlighted && "bg-background text-foreground hover:bg-secondary"
+                  )}
+                  asChild
+                >
+                  <Link href={plan.href}>{plan.cta}</Link>
+                </Button>
+              )}
             </div>
           ))}
         </div>

@@ -12,6 +12,7 @@ type FormState = "idle" | "loading" | "success" | "error"
 export default function LoginPage() {
   const [state, setState] = useState<FormState>("idle")
   const [showPassword, setShowPassword] = useState(false)
+  const [forgotSent, setForgotSent] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [errorMessage, setErrorMessage] = useState("")
 
@@ -39,12 +40,19 @@ export default function LoginPage() {
     setErrors({})
     setErrorMessage("")
     setState("loading")
-
-    // Simulate auth call
     await new Promise((r) => setTimeout(r, 1200))
-
-    // Demo: treat any valid-format credentials as success
     setState("success")
+  }
+
+  async function handleForgotPassword(e: React.MouseEvent<HTMLButtonElement>) {
+    e.preventDefault()
+    const emailInput = (document.getElementById("email") as HTMLInputElement)?.value?.trim()
+    if (!emailInput || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput)) {
+      setErrors((prev) => ({ ...prev, email: "Enter your email above first." }))
+      return
+    }
+    setErrors({})
+    setForgotSent(true)
   }
 
   return (
@@ -58,10 +66,7 @@ export default function LoginPage() {
           <ArrowLeft className="h-4 w-4" />
           Back to home
         </Link>
-        <Link
-          href="/"
-          className="text-sm font-bold tracking-tight text-foreground"
-        >
+        <Link href="/" className="text-sm font-bold tracking-tight text-foreground">
           my-app
         </Link>
         <div className="text-sm text-muted-foreground">
@@ -100,9 +105,35 @@ export default function LoginPage() {
                   You have been signed in successfully.
                 </p>
               </div>
-              <Link href="/" className="w-full">
-                <Button className="w-full">Go to dashboard</Button>
-              </Link>
+              <Button className="w-full" asChild>
+                <Link href="/dashboard">Go to dashboard</Link>
+              </Button>
+            </div>
+          ) : forgotSent ? (
+            <div className="flex flex-col items-center gap-6 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-secondary">
+                <svg
+                  className="h-7 w-7 text-accent"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  aria-hidden="true"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground tracking-tight">
+                  Check your email
+                </h1>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  If an account exists, we sent a password reset link.
+                </p>
+              </div>
+              <Button variant="outline" className="w-full" onClick={() => setForgotSent(false)}>
+                Back to sign in
+              </Button>
             </div>
           ) : (
             <>
@@ -143,7 +174,7 @@ export default function LoginPage() {
                     <button
                       type="button"
                       className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4"
-                      onClick={() => {}}
+                      onClick={handleForgotPassword}
                     >
                       Forgot password?
                     </button>
@@ -166,11 +197,7 @@ export default function LoginPage() {
                       onClick={() => setShowPassword((v) => !v)}
                       aria-label={showPassword ? "Hide password" : "Show password"}
                     >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                   {errors.password && (
@@ -184,25 +211,19 @@ export default function LoginPage() {
                   <p className="text-sm text-destructive">{errorMessage}</p>
                 )}
 
-                <Button
-                  type="submit"
-                  disabled={state === "loading"}
-                  className="w-full mt-1"
-                >
-                  {state === "loading" && (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  )}
+                <Button type="submit" disabled={state === "loading"} className="w-full mt-1">
+                  {state === "loading" && <Loader2 className="h-4 w-4 animate-spin" />}
                   {state === "loading" ? "Signing in..." : "Sign in"}
                 </Button>
               </form>
 
               <p className="mt-8 text-center text-xs text-muted-foreground">
                 By continuing, you agree to our{" "}
-                <Link href="/" className="underline underline-offset-4 hover:text-foreground transition-colors">
+                <Link href="/terms" className="underline underline-offset-4 hover:text-foreground transition-colors">
                   Terms of Service
                 </Link>{" "}
                 and{" "}
-                <Link href="/" className="underline underline-offset-4 hover:text-foreground transition-colors">
+                <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground transition-colors">
                   Privacy Policy
                 </Link>
                 .

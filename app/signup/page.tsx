@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2, Eye, EyeOff, ArrowLeft, Check } from "lucide-react"
 
-type FormState = "idle" | "loading" | "success" | "error"
+type FormState = "idle" | "loading" | "success"
 
 const PASSWORD_RULES = [
   { label: "At least 8 characters", test: (v: string) => v.length >= 8 },
@@ -29,9 +29,9 @@ export default function SignupPage() {
       errs.email = "Please enter a valid email address."
     if (!pwd || pwd.length < 8)
       errs.password = "Password must be at least 8 characters."
-    if (!PASSWORD_RULES[1].test(pwd))
+    else if (!/[A-Z]/.test(pwd))
       errs.password = "Password must contain an uppercase letter."
-    if (!PASSWORD_RULES[2].test(pwd))
+    else if (!/\d/.test(pwd))
       errs.password = "Password must contain a number."
     return errs
   }
@@ -51,8 +51,6 @@ export default function SignupPage() {
 
     setErrors({})
     setState("loading")
-
-    // Simulate auth call
     await new Promise((r) => setTimeout(r, 1400))
     setState("success")
   }
@@ -68,10 +66,7 @@ export default function SignupPage() {
           <ArrowLeft className="h-4 w-4" />
           Back to home
         </Link>
-        <Link
-          href="/"
-          className="text-sm font-bold tracking-tight text-foreground"
-        >
+        <Link href="/" className="text-sm font-bold tracking-tight text-foreground">
           my-app
         </Link>
         <div className="text-sm text-muted-foreground">
@@ -110,9 +105,9 @@ export default function SignupPage() {
                   Welcome aboard. Your account is ready to use.
                 </p>
               </div>
-              <Link href="/" className="w-full">
-                <Button className="w-full">Go to dashboard</Button>
-              </Link>
+              <Button className="w-full" asChild>
+                <Link href="/dashboard">Go to dashboard</Link>
+              </Button>
               <Link
                 href="/login"
                 className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
@@ -194,11 +189,7 @@ export default function SignupPage() {
                       onClick={() => setShowPassword((v) => !v)}
                       aria-label={showPassword ? "Hide password" : "Show password"}
                     >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                   {errors.password && (
@@ -214,9 +205,7 @@ export default function SignupPage() {
                         <li
                           key={label}
                           className={`flex items-center gap-2 text-xs transition-colors ${
-                            test(password)
-                              ? "text-accent"
-                              : "text-muted-foreground"
+                            test(password) ? "text-accent" : "text-muted-foreground"
                           }`}
                         >
                           <Check className="h-3 w-3 shrink-0" />
@@ -232,20 +221,18 @@ export default function SignupPage() {
                   disabled={state === "loading"}
                   className="w-full mt-1"
                 >
-                  {state === "loading" && (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  )}
+                  {state === "loading" && <Loader2 className="h-4 w-4 animate-spin" />}
                   {state === "loading" ? "Creating account..." : "Create account"}
                 </Button>
               </form>
 
               <p className="mt-8 text-center text-xs text-muted-foreground">
                 By creating an account, you agree to our{" "}
-                <Link href="/" className="underline underline-offset-4 hover:text-foreground transition-colors">
+                <Link href="/terms" className="underline underline-offset-4 hover:text-foreground transition-colors">
                   Terms of Service
                 </Link>{" "}
                 and{" "}
-                <Link href="/" className="underline underline-offset-4 hover:text-foreground transition-colors">
+                <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground transition-colors">
                   Privacy Policy
                 </Link>
                 .
