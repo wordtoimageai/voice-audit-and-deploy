@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
 
@@ -63,18 +64,11 @@ export function Navbar() {
 
         {/* Desktop CTA */}
         <div className="hidden md:flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleNav("#contact")}
-          >
-            Log in
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/login">Log in</Link>
           </Button>
-          <Button
-            size="sm"
-            onClick={() => handleNav("#contact")}
-          >
-            Get started
+          <Button size="sm" asChild>
+            <Link href="/signup">Get started</Link>
           </Button>
         </div>
 
@@ -102,18 +96,11 @@ export function Navbar() {
             </button>
           ))}
           <div className="flex flex-col gap-3 pt-2">
-            <Button
-              variant="outline"
-              onClick={() => handleNav("#contact")}
-              className="w-full"
-            >
-              Log in
+            <Button variant="outline" className="w-full" asChild>
+              <Link href="/login" onClick={() => setMenuOpen(false)}>Log in</Link>
             </Button>
-            <Button
-              onClick={() => handleNav("#contact")}
-              className="w-full"
-            >
-              Get started
+            <Button className="w-full" asChild>
+              <Link href="/signup" onClick={() => setMenuOpen(false)}>Get started</Link>
             </Button>
           </div>
         </div>
