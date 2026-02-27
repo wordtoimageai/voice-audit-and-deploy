@@ -1,153 +1,128 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import {
-  BarChart3,
-  Box,
-  Globe,
-  LayoutDashboard,
-  LogOut,
-  Plus,
-  Settings,
-  Users,
-} from "lucide-react"
+'use client'
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Loader2 } from 'lucide-react'
 
-const PROJECTS = [
-  { name: "my-app", status: "Live", updated: "2 mins ago", url: "my-app.vercel.app" },
-  { name: "api-service", status: "Live", updated: "1 hour ago", url: "api.my-app.com" },
-  { name: "marketing-site", status: "Building", updated: "Just now", url: "—" },
-  { name: "docs", status: "Live", updated: "3 days ago", url: "docs.my-app.com" },
-]
+export default function Dashboard() {
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState<any>(null)
 
-const STATS = [
-  { label: "Total Deploys", value: "1,284", icon: Box },
-  { label: "Active Projects", value: "4", icon: Globe },
-  { label: "Team Members", value: "3", icon: Users },
-  { label: "Page Views (30d)", value: "48.2k", icon: BarChart3 },
-]
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!input.trim()) return
 
-const STATUS_COLOR: Record<string, string> = {
-  Live: "bg-green-500",
-  Building: "bg-amber-400",
-  Error: "bg-destructive",
-}
+    setLoading(true)
+    setResult(null)
 
-export default function DashboardPage() {
+    try {
+      const res = await fetch('/api/voice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ textInput: input, mode: 'agent', language: 'bn' }),
+      })
+      const data = await res.json()
+      setResult(data)
+    } catch (err) {
+      setResult({ error: String(err) })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-background font-sans flex">
-      {/* Sidebar */}
-      <aside className="hidden md:flex w-56 flex-col border-r border-border bg-card shrink-0">
-        <div className="px-5 py-5 border-b border-border">
-          <Link href="/" className="text-sm font-bold tracking-tight text-foreground">
-            my-app
-          </Link>
+    <div className="min-h-screen bg-gray-950 p-4 md:p-8">
+      <div className="mx-auto max-w-4xl">
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-blue-400">STARTBD AI</h1>
+          <p className="mt-2 text-gray-400">ভয়েস কমান্ডার V1 - Web Edition</p>
         </div>
-        <nav className="flex flex-col gap-1 px-3 py-4 flex-1" aria-label="Sidebar navigation">
-          {[
-            { label: "Overview", icon: LayoutDashboard, href: "/dashboard", active: true },
-            { label: "Projects", icon: Box, href: "/dashboard", active: false },
-            { label: "Analytics", icon: BarChart3, href: "/dashboard", active: false },
-            { label: "Team", icon: Users, href: "/dashboard", active: false },
-            { label: "Settings", icon: Settings, href: "/dashboard", active: false },
-          ].map(({ label, icon: Icon, href, active }) => (
-            <Link
-              key={label}
-              href={href}
-              className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                active
-                  ? "bg-secondary text-foreground"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-              }`}
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              {label}
-            </Link>
-          ))}
-        </nav>
-        <div className="px-3 py-4 border-t border-border">
-          <Link
-            href="/"
-            className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-          >
-            <LogOut className="h-4 w-4 shrink-0" />
-            Sign out
-          </Link>
-        </div>
-      </aside>
 
-      {/* Main */}
-      <div className="flex flex-col flex-1 min-w-0">
-        {/* Top bar */}
-        <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">
-          <div>
-            <h1 className="text-base font-semibold text-foreground">Overview</h1>
-            <p className="text-xs text-muted-foreground">Welcome back</p>
-          </div>
-          <Button size="sm" className="gap-1.5">
-            <Plus className="h-4 w-4" />
-            New project
+        {/* Input Form */}
+        <form onSubmit={handleSubmit} className="mb-6 flex gap-2">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="বাংলায় বা English এ লিখুন..."
+            disabled={loading}
+            className="flex-1 bg-gray-900 text-white border-gray-800"
+          />
+          <Button type="submit" disabled={loading || !input.trim()}>
+            {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing</> : 'Send'}
           </Button>
-        </header>
+        </form>
 
-        <main className="flex-1 px-6 py-8 flex flex-col gap-8">
-          {/* Stats */}
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {STATS.map(({ label, value, icon: Icon }) => (
-              <div
-                key={label}
-                className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5"
-              >
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium text-muted-foreground">{label}</p>
-                  <Icon className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <p className="text-2xl font-bold tracking-tight text-foreground">{value}</p>
+        {/* Result */}
+        {result && (
+          <div className="space-y-4">
+            {result.error && (
+              <div className="rounded-lg bg-red-900/20 p-4 text-red-400">
+                <strong>Error:</strong> {result.error}
               </div>
-            ))}
-          </div>
+            )}
 
-          {/* Projects table */}
-          <div className="rounded-xl border border-border bg-card overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-              <h2 className="text-sm font-semibold text-foreground">Projects</h2>
-              <Button variant="outline" size="sm" className="gap-1.5">
-                <Plus className="h-3.5 w-3.5" />
-                Add project
-              </Button>
-            </div>
-            <div className="divide-y divide-border">
-              {PROJECTS.map((project) => (
-                <div
-                  key={project.name}
-                  className="flex items-center justify-between px-6 py-4 hover:bg-secondary/50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-secondary border border-border shrink-0">
-                      <Box className="h-4 w-4 text-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{project.name}</p>
-                      <p className="text-xs text-muted-foreground">{project.url}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="hidden sm:flex items-center gap-1.5">
-                      <span
-                        className={`inline-block h-1.5 w-1.5 rounded-full ${STATUS_COLOR[project.status] ?? "bg-border"}`}
-                      />
-                      <span className="text-xs text-muted-foreground">{project.status}</span>
-                    </div>
-                    <span className="hidden md:block text-xs text-muted-foreground">
-                      {project.updated}
-                    </span>
-                    <Button variant="ghost" size="sm" className="text-xs h-7 px-3">
-                      Visit
-                    </Button>
-                  </div>
+            {result.translation && (
+              <div className="rounded-lg bg-gray-900 p-4">
+                <div className="text-sm text-gray-500 mb-1">Translation:</div>
+                <div className="text-blue-400">{result.translation}</div>
+              </div>
+            )}
+
+            {result.culturalNote && (
+              <div className="rounded-lg bg-gray-900 p-4">
+                <div className="text-sm text-gray-500 mb-1">Cultural Note:</div>
+                <div className="text-orange-400">{result.culturalNote}</div>
+              </div>
+            )}
+
+            {result.response && result.response !== result.translation && (
+              <div className="rounded-lg bg-gray-900 p-4">
+                <div className="text-sm text-gray-500 mb-1">AI Response ({result.llmUsed}):</div>
+                <div className="text-white whitespace-pre-wrap">{result.response}</div>
+              </div>
+            )}
+
+            {result.intent && (
+              <div className="rounded-lg bg-gray-900 p-4">
+                <div className="text-sm text-gray-500 mb-1">Intent:</div>
+                <div className="inline-block rounded-full bg-purple-900/30 px-3 py-1 text-sm text-purple-400">
+                  {result.intent}
                 </div>
-              ))}
-            </div>
+                {result.confidence && (
+                  <span className="ml-3 text-gray-500 text-sm">Confidence: {(result.confidence * 100).toFixed(0)}%</span>
+                )}
+              </div>
+            )}
+
+            {(result.lovableUrl || result.boltUrl) && (
+              <div className="rounded-lg bg-gray-900 p-4 space-y-2">
+                <div className="text-sm text-gray-500 mb-2">Builder Links:</div>
+                {result.lovableUrl && (
+                  <a
+                    href={result.lovableUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block rounded bg-purple-600 px-4 py-2 text-center text-white hover:bg-purple-700"
+                  >
+                    Open in Lovable.dev
+                  </a>
+                )}
+                {result.boltUrl && (
+                  <a
+                    href={result.boltUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block rounded bg-blue-600 px-4 py-2 text-center text-white hover:bg-blue-700"
+                  >
+                    Open in Bolt.new
+                  </a>
+                )}
+              </div>
+            )}
           </div>
-        </main>
+        )}
       </div>
     </div>
   )
