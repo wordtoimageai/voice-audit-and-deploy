@@ -41,6 +41,20 @@ Always respond in JSON format:
   "actionData": {}
 }`
 
+export async function transcribeAudio(audioBase64: string, mimeType: string = 'audio/webm'): Promise<string> {
+  const model = getGeminiFlash()
+  const result = await model.generateContent([
+    {
+      inlineData: {
+        mimeType,
+        data: audioBase64,
+      },
+    },
+    { text: 'Transcribe this audio exactly as spoken. If it is Bangla, write in Bangla script. If English, write in English. Return only the transcription, nothing else.' },
+  ])
+  return result.response.text().trim()
+}
+
 export async function translateAndClassify(banglaInput: string): Promise<{
   translation: string
   intent: string
@@ -53,7 +67,7 @@ export async function translateAndClassify(banglaInput: string): Promise<{
     { text: BANGLA_SYSTEM_PROMPT },
     { text: `User input: "${banglaInput}"` },
   ])
-  
+
   const responseText = result.response.text()
   try {
     const jsonMatch = responseText.match(/\{[\s\S]*\}/)
@@ -63,7 +77,7 @@ export async function translateAndClassify(banglaInput: string): Promise<{
   } catch {
     // fallback
   }
-  
+
   return {
     translation: banglaInput,
     intent: 'translate_only',
