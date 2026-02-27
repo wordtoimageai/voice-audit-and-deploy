@@ -1,0 +1,34 @@
+# STARTBD Commander V1 - Render Deploy Config
+# Project: STARTBD_COMMANDER_V1 | Owner: Tawhid
+
+services:
+  - type: web
+    name: voice-ai
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: pnpm install --frozen-lockfile && pnpm run build
+    startCommand: pnpm run start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      # Add these in Render dashboard (never commit real keys):
+      # - key: GEMINI_API_KEY
+      #   sync: false
+      # - key: OPENAI_API_KEY
+      #   sync: false
+      # - key: ANTHROPIC_API_KEY
+      #   sync: false
+      # - key: PERPLEXITY_API_KEY
+      #   sync: false
+      # - key: ELEVENLABS_API_KEY
+      #   sync: false
+      # - key: SEDO_API_KEY
+      #   sync: false
+      # - key: INSTAGRAM_ACCESS_TOKEN
+      #   sync: false
+      # - key: MAKE_WEBHOOK_URL
+      #   sync: false
