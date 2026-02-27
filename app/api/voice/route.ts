@@ -8,6 +8,7 @@ import { AgentRequest } from '@/types/agent'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60 // 60 second timeout for LLM calls
+export const dynamic = 'force-dynamic' // prevent static caching of env var check
 
 export async function POST(req: NextRequest) {
   try {
