@@ -2,7 +2,7 @@
 // Routes intent to correct AI: Gemini / Claude / GPT-4o / Perplexity
 
 import { AgentIntent, AgentRequest, AgentResponse } from '@/types/agent'
-import { transcribeAudio, transcribeAndClassify } from '@/lib/gemini'
+import { transcribeAudio, translateAndClassify } from '@/lib/gemini'
 import { callClaude } from '@/lib/claude'
 import { callGPT4o } from '@/lib/openai'
 import { callPerplexity } from '@/lib/perplexity'
@@ -15,6 +15,14 @@ function buildLovableURL(prompt: string): string {
 function buildBoltURL(prompt: string): string {
   const encoded = encodeURIComponent(prompt)
   return `https://bolt.new/?prompt=${encoded}`
+}
+
+function safeParseJSON(raw: unknown): Record<string, unknown> {
+  if (typeof raw === 'object' && raw !== null) return raw as Record<string, unknown>
+  if (typeof raw === 'string') {
+    try { return JSON.parse(raw) } catch { /* ignore */ }
+  }
+  return {}
 }
 
 export async function routeCommand(request: AgentRequest): Promise<AgentResponse> {
@@ -34,115 +42,111 @@ export async function routeCommand(request: AgentRequest): Promise<AgentResponse
 
     // Step 2: If translate_only mode - just translate
     if (request.mode === 'translate_only') {
-      const rawResult = await transcribeAndClassify(inputText)
+      const rawResult = await translateAndClassify(inputText)
       const parsed = safeParseJSON(rawResult)
       return {
         ...parsed,
         intent: 'translate_only',
         llmUsed: 'gemini',
-      }
+      } as AgentResponse
     }
 
     // Step 3: Agent mode - classify intent first with Gemini
-    const rawResult = await transcribeAndClassify(inputText)
-    const classified = safeParseJSON(rawResult)
-    const intent: AgentIntent = classified.intent || 'general'
+    const classified = await translateAndClassify(inputText)
+    const intent: AgentIntent = (classified.intent as AgentIntent) || 'general'
 
     // Step 4: Route to correct LLM based on intent
-    let finalResponse = classified.response || ''
+    let finalResponse = classified.translation || ''
     let llmUsed: string = 'gemini'
     let promptForBuilder: string | undefined
     let targetPlatform: string | undefined
 
     switch (intent) {
-      case 'coding_task':
-        // Claude 3.5 Sonnet for coding
-        finalResponse = await callClaude(classified.englishText)
+      case 'coding_task': {
+        finalResponse = await callClaude(
+          `Build this: ${classified.translation}\n\nOriginal request: ${inputText}`,
+          'You are an expert software engineer. Provide complete, working code.'
+        )
         llmUsed = 'claude'
         break
+      }
 
-      case 'deep_research':
-        // Perplexity for research
-        finalResponse = await callPerplexity(classified.englishText)
+      case 'deep_research': {
+        finalResponse = await callPerplexity(
+          classified.translation || inputText
+        )
         llmUsed = 'perplexity'
         break
+      }
 
       case 'creative_content':
-        // GPT-4o for creative tasks
-        finalResponse = await callGPT4o(classified.englishText)
+      case 'image_generate':
+      case 'email_generate': {
+        finalResponse = await callGPT4o(
+          classified.translation || inputText
+        )
         llmUsed = 'gpt4o'
         break
+      }
 
-      case 'web_building':
-        // Build optimized prompt for Lovable
+      case 'web_building': {
         const webPrompt = await callGPT4o(
-          `Convert this to an optimized Lovable.dev website prompt: ${classified.englishText}`
+          `Create a detailed website specification for: ${classified.translation}`,
+          'You are a senior web architect. Create comprehensive website specs.'
         )
+        finalResponse = webPrompt
         promptForBuilder = webPrompt
         targetPlatform = 'lovable'
-        finalResponse = buildLovableURL(webPrompt)
-        llmUsed = 'lovable'
-        break
-
-      case 'image_generate':
-        // GPT-4o for image prompt optimization
-        const imgPrompt = await callGPT4o(
-          `Create an optimized image generation prompt for this request: ${classified.englishText}`
-        )
-        classified.promptForImage = imgPrompt
-        finalResponse = imgPrompt
         llmUsed = 'gpt4o'
         break
+      }
 
-      default:
-        // Default: Gemini Flash handles it
+      case 'domain_update':
+      case 'domain_check': {
+        finalResponse = `Domain action: ${classified.translation}. Use Sedo/Afternic dashboard to execute.`
         llmUsed = 'gemini'
         break
+      }
+
+      case 'social_post':
+      case 'social_analytics': {
+        finalResponse = `Social media action: ${classified.translation}. Instagram @interiorofai integration active.`
+        llmUsed = 'gemini'
+        break
+      }
+
+      default: {
+        // translate_only, call_contact, open_camera, open_youtube handled by client
+        finalResponse = classified.translation || inputText
+        llmUsed = 'gemini'
+      }
     }
 
+    const lovableUrl = promptForBuilder ? buildLovableURL(promptForBuilder) : undefined
+    const boltUrl = promptForBuilder ? buildBoltURL(promptForBuilder) : undefined
+
     return {
-      transcriptBn: classified.transcriptBn || inputText,
-      englishText: classified.englishText || inputText,
+      translation: classified.translation,
       intent,
-      llmUsed: llmUsed as any,
+      confidence: classified.confidence,
+      culturalNote: classified.culturalNote,
       response: finalResponse,
-      targetPlatform,
+      llmUsed,
       promptForBuilder,
-      promptForImage: classified.promptForImage,
-      contactName: classified.contactName,
-      phoneNumber: classified.phoneNumber,
-      youtubeQuery: classified.youtubeQuery,
-      appToOpen: classified.appToOpen,
-      domainAction: classified.domainAction,
-      socialAction: classified.socialAction,
-    }
+      targetPlatform,
+      lovableUrl,
+      boltUrl,
+      processingTimeMs: Date.now() - startTime,
+    } as AgentResponse
 
-  } catch (error: any) {
-    console.error('[STARTBD Commander] Router error:', error)
+  } catch (error) {
     return {
-      transcriptBn: request.textInput || '',
-      englishText: request.textInput || '',
-      intent: 'general',
-      llmUsed: 'gemini',
-      response: 'Sorry, I encountered an error processing your command.',
-      error: error.message,
-    }
-  }
-}
-
-function safeParseJSON(text: string): any {
-  try {
-    // Extract JSON from markdown code blocks if present
-    const jsonMatch = text.match(/```(?:json)?\n?([\s\S]*?)\n?```/)
-    const jsonStr = jsonMatch ? jsonMatch[1] : text
-    return JSON.parse(jsonStr.trim())
-  } catch {
-    // Return a fallback object if parsing fails
-    return {
-      transcriptBn: text,
-      englishText: text,
-      intent: 'general',
-      response: text,
-    }
+      translation: '',
+      intent: 'general' as AgentIntent,
+      confidence: 0,
+      response: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      llmUsed: 'none',
+      processingTimeMs: Date.now() - startTime,
+    } as AgentResponse
   }
 }
