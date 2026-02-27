@@ -1,0 +1,10 @@
+# Ignore Android app files - they don't affect the Next.js backend
+android-app/
+*.kt
+*.java
+*.xml
+*.gradle
+*.kts
+gradle/
+gradlew
+gradlew.bat
