@@ -1,19 +1,23 @@
-// STARTBD Commander V1 - OpenAI GPT-4o Client
+// STARTBD Commander V1 - OpenAI GPT-4o Client (Lazy Init)
 // Used for: Creative content, image prompts, web building prompts
 
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-})
+// Lazy initialization - only create client when actually needed
+function getOpenAI(): OpenAI {
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) throw new Error('OPENAI_API_KEY not set')
+  return new OpenAI({ apiKey })
+}
 
 export async function callGPT4o(prompt: string, systemPrompt?: string): Promise<string> {
+  const openai = getOpenAI()
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o',
     messages: [
       {
         role: 'system',
-        content: systemPrompt || `You are a creative AI assistant for StartBD, a Bangladeshi digital company owned by Tawhid. You specialize in creating compelling content, optimized prompts for AI tools, and creative copy. You understand Bangladeshi culture and market.`,
+        content: systemPrompt || `You are STARTBD Commander, an AI assistant for Tawhid, a Bangladeshi digital entrepreneur. You specialize in creative content, image prompts, web building, social media, and business growth for Bangladesh context.`,
       },
       {
         role: 'user',
@@ -30,41 +34,14 @@ export async function callGPT4o(prompt: string, systemPrompt?: string): Promise<
 export async function generateImagePrompt(userRequest: string): Promise<string> {
   const prompt = `Create a detailed, optimized image generation prompt for this request: "${userRequest}"
 
-Format the prompt for DALL-E 3 or Midjourney. Include: subject, style, lighting, composition, quality modifiers.
-Return ONLY the prompt text, nothing else.`
-
+Return ONLY the image prompt, nothing else. Make it vivid, specific, and suitable for DALL-E 3 or Midjourney.`
   return callGPT4o(prompt)
 }
 
-export async function generateEmailDraft(
-  subject: string,
-  context: string,
-  tone: 'professional' | 'casual' | 'formal' = 'professional'
-): Promise<{ subject: string; body: string }> {
-  const prompt = `Write an email with the following details:
-Subject context: ${subject}
-Content context: ${context}
-Tone: ${tone}
+export async function buildWebsitePrompt(requirements: string): Promise<string> {
+  const systemPrompt = `You are an expert web developer and prompt engineer. Create comprehensive prompts for AI website builders like Lovable, v0, or Bolt.`
+  const prompt = `Create a detailed website building prompt for: "${requirements}"
 
-Return as JSON: { "subject": "...", "body": "..." }`
-
-  const result = await callGPT4o(prompt)
-  try {
-    return JSON.parse(result)
-  } catch {
-    return { subject, body: result }
-  }
-}
-
-export async function generateSocialPost(
-  topic: string,
-  platform: string,
-  account: string = '@interiorofai'
-): Promise<string> {
-  const prompt = `Create an engaging ${platform} post for ${account} about: ${topic}
-
-Include: compelling caption, relevant hashtags, emoji usage appropriate for Bangladeshi AI/tech audience.
-Return ONLY the post text.`
-
-  return callGPT4o(prompt)
+Include: layout, color scheme, features, components, tech stack suggestions.`
+  return callGPT4o(prompt, systemPrompt)
 }
